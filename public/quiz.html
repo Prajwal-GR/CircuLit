@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - CircuLit</title>
+    <link href="/css/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-indigo-600 mb-6 text-center">CircuLit Quiz</h1>
+        <div id="quiz">
+            <div class="mb-8">
+                <img src="https://via.placeholder.com/400" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
+                <input type="text" id="answer1" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
+            </div>
+            <div class="mb-8">
+                <img src="https://via.placeholder.com/400" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
+                <input type="text" id="answer2" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
+            </div>
+        </div>
+        <button id="submitButton" onclick="askToSubmitQuiz()" class="w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">Submit Answers</button>
+        <p id="score" class="text-center mt-4 text-lg"></p>
+    </div>
+    <script>
+
+        async function askToSubmitQuiz(){
+            var wantToSubmit = confirm("Are you sure, You want to submit");
+            if(wantToSubmit){
+                submitQuiz();
+            }
+        }
+        async function submitQuiz() {
+
+            const answers = {
+                answer1: document.getElementById('answer1').value,
+                answer2: document.getElementById('answer2').value
+            };
+            const userId = localStorage.getItem('userId');
+            const submitButton = document.getElementById('submitButton');
+
+            try {
+                // Disable button during submission
+                submitButton.disabled = true;
+
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+                const response = await fetch('/api/submit-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, answers })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Display score and success message
+                    document.getElementById('score').textContent = `Your score: ${result.score}`;
+                    // Keep button disabled
+                    submitButton.disabled = true;
+                    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    // Hide quiz form
+                    document.getElementById('quiz').style.display = 'none';
+                    // Show success message
+                    const message = document.createElement('p');
+                    message.textContent = result.message || 'Quiz submitted successfully!';
+                    message.className = 'text-center text-green-600 mt-4';
+                    document.querySelector('.max-w-4xl').appendChild(message);
+                } else {
+                    // Re-enable button on error
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    // Display error message
+                    document.getElementById('score').textContent = result.score ? `Your score: ${result.score}` : '';
+                    alert(result.message);
+                }
+            } catch (error) {
+                // Re-enable button on network error
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                alert('Error submitting quiz: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
