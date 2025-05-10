@@ -1,5 +1,23 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const path = require('path')
+
+exports.getIndex = (req,res) =>{
+    res.sendFile(path.join(__dirname, '../','public', 'index.html'));
+}
+
+exports.getregister = (req, res) => {
+    res.sendFile(path.join(__dirname, '../','public', 'create-account.html'));
+};
+
+exports.getlogin = (req, res) => {
+    res.sendFile(path.join(__dirname, '../','public', 'login.html'));
+};
+
+
+exports.getQuiz = (req, res) => {
+    res.sendFile(path.join(__dirname, '../','public', 'quiz.html'));
+};
 
 exports.register = async (req, res) => {
     try {

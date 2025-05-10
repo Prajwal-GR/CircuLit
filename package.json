@@ -4,7 +4,7 @@
   "description": "CircuLit quiz event website",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "build:css": "npx tailwindcss -i ./public/css/input.css -o ./public/css/tailwind.css --minify",
     "watch:css": "npx tailwindcss -i ./public/css/input.css -o ./public/css/tailwind.css --watch"
   },
@@ -12,7 +12,8 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "mongoose": "^8.14.2"
+    "mongoose": "^8.14.2",
+    "nodemon": "^3.1.10"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.14"

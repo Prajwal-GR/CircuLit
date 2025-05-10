@@ -23,14 +23,14 @@
             <input type="password" id="password" class="w-full p-2 border rounded-lg" required>
         </div>
         <button onclick="createAccount()" class="w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">Create Account</button>
-        <p class="mt-4 text-center">Already have an account? <a href="/login.html" class="text-indigo-600 hover:underline">Login</a></p>
+        <p class="mt-4 text-center">Already have an account? <a href="/login" class="text-indigo-600 hover:underline">Login</a></p>
     </div>
     <script>
         async function createAccount() {
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const response = await fetch('/api/register', {
+            const response = await fetch('/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password })
@@ -38,7 +38,7 @@
             const result = await response.json();
             if (response.ok) {
                 alert('Account created! Please login.');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
             } else {
                 alert(result.message);
             }

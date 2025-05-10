@@ -9,10 +9,10 @@ app.use(cors());
 app.use(express.static('public')); // Line 8
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost/circulit', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('MongoDB connection error:', err));
 
-app.use('/api', userRoutes);
+app.use('/', userRoutes);
 
 app.listen(3000, () => console.log('Server running on port 3000'));

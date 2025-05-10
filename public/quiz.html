@@ -45,7 +45,7 @@
 
                 submitButton.classList.add('opacity-50', 'cursor-not-allowed');
 
-                const response = await fetch('/api/submit-quiz', {
+                const response = await fetch('/submit-quiz', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId, answers })
