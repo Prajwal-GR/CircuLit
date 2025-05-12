@@ -4,23 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz - CircuLit</title>
-    <link href="/css/tailwind.css" rel="stylesheet">
+    <link href="./css/tailwind.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 p-8">
+<body class=" p-8">
+    <div class="bg-blue-950">
     <div class="max-w-4xl mx-auto">
         <h1 class="text-3xl font-bold text-indigo-600 mb-6 text-center">CircuLit Quiz</h1>
         <div id="quiz">
             <div class="mb-8">
-                <img src="https://via.placeholder.com/400" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
+                <img src="" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer1" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
             </div>
             <div class="mb-8">
-                <img src="https://via.placeholder.com/400" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
+                <img src="" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer2" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
             </div>
         </div>
         <button id="submitButton" onclick="askToSubmitQuiz()" class="w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">Submit Answers</button>
         <p id="score" class="text-center mt-4 text-lg"></p>
+    </div>
     </div>
     <script>
 
