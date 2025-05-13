@@ -4,7 +4,8 @@
   "description": "CircuLit quiz event website",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "node server.js",
+    "dev" :"nodemon server.js",
     "build:css": "npx tailwindcss -i ./public/css/input.css -o ./public/css/tailwind.css --minify",
     "watch:css": "npx tailwindcss -i ./public/css/input.css -o ./public/css/tailwind.css --watch"
   },
