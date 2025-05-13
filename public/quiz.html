@@ -12,13 +12,26 @@
         <h1 class="text-3xl font-bold text-indigo-600 mb-6 text-center">CircuLit Quiz</h1>
         <div id="quiz">
             <div class="mb-8">
-                <img src="" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
+                <img src="./questions/image.png" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer1" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
             </div>
             <div class="mb-8">
-                <img src="" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
+                <img src="./questions/image.png" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer2" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
             </div>
+            <div class="mb-8">
+                <img src="./questions/image.png" alt="Question 3" class="w-full max-w-md mx-auto mb-4">
+                <input type="text" id="answer3" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
+            </div>
+            <div class="mb-8">
+                <img src="./questions/image.png" alt="Question 4" class="w-full max-w-md mx-auto mb-4">
+                <input type="text" id="answer4" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
+            </div>
+            <div class="mb-8">
+                <img src="./questions/image.png" alt="Question 5" class="w-full max-w-md mx-auto mb-4">
+                <input type="text" id="answer5" class="w-full p-2 border rounded-lg" placeholder="Enter your answer">
+            </div>
+            <br>
         </div>
         <button id="submitButton" onclick="askToSubmitQuiz()" class="w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">Submit Answers</button>
         <p id="score" class="text-center mt-4 text-lg"></p>
@@ -36,7 +49,11 @@
 
             const answers = {
                 answer1: document.getElementById('answer1').value,
-                answer2: document.getElementById('answer2').value
+                answer2: document.getElementById('answer2').value,
+                answer3: document.getElementById('answer3').value,
+                answer4: document.getElementById('answer4').value,
+                answer5: document.getElementById('answer5').value
+
             };
             const userId = localStorage.getItem('userId');
             const submitButton = document.getElementById('submitButton');
@@ -46,7 +63,7 @@
                 submitButton.disabled = true;
 
                 submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-
+                    console.log('before response');
                 const response = await fetch('/submit-quiz', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
