@@ -44,7 +44,18 @@
             </div>
         </div>
     </div>
+    <div id="toast" class="hidden fixed top-5 right-5 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300">
+        <span id="toast-message"></span>
+    </div>
     <script>
+        function showToast(message,type='error',duration) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        toastMsg.textContent = message;
+        toast.className = `fixed top-5 right-5 px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300 text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+}`;
+        }
         async function askToSubmitQuiz(){
             document.getElementById("confirmation").classList.remove("hidden");
         }
@@ -59,6 +70,7 @@
                 answer4: document.getElementById('answer4').value,
                 answer5: document.getElementById('answer5').value
             };
+            hidepopup();
             const userId = localStorage.getItem('userId');
             const submitButton = document.getElementById('submitButton');
 
@@ -73,7 +85,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('score').textContent = `Your score: ${result.score}`;
+                    // document.getElementById('score').textContent = `Your score: ${result.score}`;
                     submitButton.classList.add('opacity-50', 'cursor-not-allowed');
                     document.getElementById('quiz').style.display = 'none';
                     const message = document.createElement('p');
@@ -83,13 +95,13 @@
                 } else {
                     submitButton.disabled = false;
                     submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                    document.getElementById('score').textContent = result.score ? `Your score: ${result.score}` : '';
-                    alert(result.message);
+                    // document.getElementById('score').textContent = result.score ? `Your score: ${result.score}` : '';
+                    showToast(result.message);
                 }
             } catch (error) {
                 submitButton.disabled = false;
                 submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                alert('Error submitting quiz: ' + error.message);
+                showToast('Error submitting quiz: ' + error.message);
             }
         }
     </script>
