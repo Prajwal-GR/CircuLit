@@ -15,6 +15,18 @@
           height: 100vh;
           font-family: sans-serif;
         }
+        /* @media (max-width: 600px) {
+          body {
+          margin: 0;
+          padding: 0;
+          background-image: url('./images/image1Rotated.png'); 
+          background-size: cover; 
+          background-repeat: no-repeat;
+          background-position: center;
+          height: 100vh;
+          font-family: sans-serif;
+          }
+        } */
       </style>
    <link href="/css/tailwind.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +45,18 @@
         <button onclick="login()" class="w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">Login</button>
         <p class="mt-4 text-center text-white">Don't have an account? <a href="/create-account" class="text-indigo-600 hover:underline">Create one</a></p>
     </div>
+    <div id="toast" class="hidden fixed top-5 right-5 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300">
+        <span id="toast-message"></span>
+    </div>
     <script>
+        function showToast(message,type='error',duration) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+        toastMsg.textContent = message;
+        toast.className = `fixed top-5 right-5 px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300 text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+}`;
+        }
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -47,7 +70,7 @@
                 localStorage.setItem('userId', result.userId);
                 window.location.href = '/quiz';
             } else {
-                alert(result.message);
+                showToast(result.message);
             }
         }
     </script>
