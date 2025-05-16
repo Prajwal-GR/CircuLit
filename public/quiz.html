@@ -4,9 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Quiz - CircuLit</title>
-    <script src="https://cdn.tailwindcss.com"></script> 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body class="p-8 bg-gray-900 text-white"> 
+    <!-- Timer Display -->
+    <div class="fixed top-4 right-4 bg-gray-800 text-lime-300 px-4 py-2 rounded-lg shadow-lg z-10">
+        Time Remaining: <span id="timer">20:00</span>
+    </div>
+
     <div class="max-w-4xl mx-auto">
         <h1 class="text-3xl font-bold text-lime-300 mb-6 text-center">CircuLit Quiz</h1>
         <div id="quiz">
@@ -33,25 +47,105 @@
             <br>
         </div>
         <button id="submitButton" onclick="askToSubmitQuiz()" class="w-full bg-lime-300 text-gray-900 p-2 rounded-lg hover:bg-lime-500">Submit Answers</button>
-        <p id="score" class="text-center mt-4 text-lg text-lime-300"></p> 
     </div>
+
+    <!-- Confirmation Popup -->
     <div id="confirmation" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
         <div class="bg-gray-800 text-white rounded-lg p-6 max-w-sm w-full shadow-lg">
             <h2 class="text-xl font-bold mb-4">Are you sure you want to submit?</h2>
             <div class="flex justify-end space-x-4">
-                <button onclick="hidepopup()" class="px-4 py-2 bg-gray-300 rounded text-gray-800 hover:bg-gray-400">Cancel</button>
+                <button onclick="hidePopup()" class="px-4 py-2 bg-gray-300 rounded text-gray-800 hover:bg-gray-400">Cancel</button>
                 <button onclick="submitQuiz()" class="px-4 py-2 bg-lime-300 rounded text-gray-800 hover:bg-lime-400">Yes, Submit!</button>
             </div>
         </div>
     </div>
+
     <script>
-        async function askToSubmitQuiz(){
-            document.getElementById("confirmation").classList.remove("hidden");
+        // Timer functionality
+        let timerInterval;
+        const totalTime = 1200; // 20 minutes in seconds
+        let timeRemaining = totalTime;
+        let lastSyncTime = Date.now();
+
+        // Format time as MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
-        async function hidepopup() {
-            document.getElementById("confirmation").classList.add("hidden");
+
+        // Update the timer display
+        function updateTimerDisplay() {
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = formatTime(timeRemaining);
+            
+            if (timeRemaining <= 300) {
+                timerElement.classList.remove('text-lime-300');
+                timerElement.classList.add('text-red-500');
+            } else {
+                timerElement.classList.remove('text-red-500');
+                timerElement.classList.add('text-lime-300');
+            }
         }
-        async function submitQuiz() {
+
+        // Sync with server
+        async function syncWithServer() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/quiz-time/${userId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.quizCompleted) {
+                        clearInterval(timerInterval);
+                        document.getElementById('submitButton').disabled = true;
+                        document.getElementById('submitButton').classList.add('opacity-50', 'cursor-not-allowed');
+                        return;
+                    }
+                    
+                    if (result.timeRemaining < timeRemaining) {
+                        timeRemaining = result.timeRemaining;
+                        updateTimerDisplay();
+                        lastSyncTime = Date.now();
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing timer:', error);
+            }
+        }
+
+        // Start the countdown
+        function startCountdown() {
+            updateTimerDisplay();
+            timerInterval = setInterval(async () => {
+                const now = Date.now();
+                const timeSinceLastSync = now - lastSyncTime;
+                
+                if (timeSinceLastSync > 1000) {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    lastSyncTime = now;
+                }
+                
+                if (timeSinceLastSync > 15000) {
+                    await syncWithServer();
+                }
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timeExpired();
+                }
+            }, 1000);
+        }
+
+        // Handle time expiration
+        async function timeExpired() {
+            const submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            
             const answers = {
                 answer1: document.getElementById('answer1').value,
                 answer2: document.getElementById('answer2').value,
@@ -59,39 +153,159 @@
                 answer4: document.getElementById('answer4').value,
                 answer5: document.getElementById('answer5').value
             };
+            
             const userId = localStorage.getItem('userId');
-            const submitButton = document.getElementById('submitButton');
-
+            
             try {
-                submitButton.disabled = true;
-                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
                 const response = await fetch('/submit-quiz', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId, answers })
                 });
+                
                 const result = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('score').textContent = `Your score: ${result.score}`;
-                    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    document.getElementById('quiz').style.display = 'none';
-                    const message = document.createElement('p');
-                    message.textContent = result.message || 'Quiz submitted successfully!';
-                    message.className = 'text-center text-green-500 mt-4';
-                    document.querySelector('.max-w-4xl').appendChild(message);
+                
+                if (response.ok && result.success) {
+                    showSuccessMessage(result);
                 } else {
-                    submitButton.disabled = false;
-                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                    document.getElementById('score').textContent = result.score ? `Your score: ${result.score}` : '';
-                    alert(result.message);
+                    alert(result.message || "Time expired but submission failed");
                 }
             } catch (error) {
-                submitButton.disabled = false;
-                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                alert('Error submitting quiz: ' + error.message);
+                console.error('Error submitting quiz:', error);
             }
         }
+
+        // Show success message
+        function showSuccessMessage(result) {
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('confirmation').classList.add('hidden');
+            
+            const successMessage = document.createElement('div');
+            successMessage.className = 'bg-green-500 text-white p-4 rounded-lg mb-4 text-center fade-in';
+            successMessage.innerHTML = `
+                <h3 class="font-bold text-xl">${result.message}</h3>
+                <p>You will be redirected shortly...</p>
+            `;
+            
+            document.querySelector('.max-w-4xl').appendChild(successMessage);
+            document.querySelector('.fixed.top-4.right-4').style.display = 'none';
+            
+            // Redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 3000);
+        }
+
+        // Initialize and start the timer
+        async function initializeTimer() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/quiz-time/${userId}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.quizCompleted) {
+                        timeRemaining = 0;
+                        updateTimerDisplay();
+                        document.getElementById('submitButton').disabled = true;
+                        document.getElementById('submitButton').classList.add('opacity-50', 'cursor-not-allowed');
+                        return;
+                    }
+                    
+                    timeRemaining = result.timeRemaining || totalTime;
+                    updateTimerDisplay();
+                    
+                    if (timeRemaining === totalTime) {
+                        await fetch('/start-quiz-timer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId })
+                        });
+                    }
+                    
+                    if (timeRemaining > 0) {
+                        startCountdown();
+                    } else {
+                        timeExpired();
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing timer:', error);
+                timeRemaining = totalTime;
+                startCountdown();
+            }
+        }
+
+        // Show confirmation popup
+        function askToSubmitQuiz() {
+            console.log("Submit button clicked");
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert("Please login first");
+                return;
+            }
+            document.getElementById("confirmation").classList.remove("hidden");
+        }
+
+        // Hide confirmation popup
+        function hidePopup() {
+            document.getElementById("confirmation").classList.add("hidden");
+        }
+
+        // Submit quiz function
+        async function submitQuiz() {
+            console.log("Submitting quiz...");
+            const submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            try {
+                // Stop the timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+
+                // Collect answers
+                const answers = {
+                    answer1: document.getElementById('answer1').value,
+                    answer2: document.getElementById('answer2').value,
+                    answer3: document.getElementById('answer3').value,
+                    answer4: document.getElementById('answer4').value,
+                    answer5: document.getElementById('answer5').value
+                };
+                
+                const userId = localStorage.getItem('userId');
+                if (!userId) {
+                    throw new Error("No user ID found");
+                }
+
+                // Submit to server
+                const response = await fetch('/submit-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, answers })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to submit quiz');
+                }
+
+                // Show success message
+                showSuccessMessage(result);
+            } catch (error) {
+                console.error("Submission error:", error);
+                alert("Error: " + error.message);
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', initializeTimer);
     </script>
 </body>
 </html>

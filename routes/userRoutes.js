@@ -11,5 +11,6 @@ router.get('/create-account',userController.getregister);
 router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.post('/submit-quiz', userController.submitQuiz);
-
+router.post('/start-quiz-timer', userController.startQuizTimer);
+router.get('/quiz-time/:userId', userController.getQuizTime);
 module.exports = router;

@@ -6,10 +6,14 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     score: { type: Number, default: 0 },
     submittedAnswers: {
-        type: [String],  // Array to store the correct answers
+        type: [String],
         default: [],
     },
-    hasSubmittedQuiz: { type: Boolean, default: false } // Tracks quiz submission
+    hasSubmittedQuiz: { type: Boolean, default: false },
+    quizStartTime: { type: Date },
+    timeRemaining: { type: Number, default: 1200 },
+    submittedAt: { type: Date },
+    timeTaken: { type: Number }
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,8 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const path = require('path')
+const path = require('path');
 
-exports.getIndex = (req,res) =>{
+exports.getIndex = (req,res) => {
     res.sendFile(path.join(__dirname, '../','public', 'index.html'));
 }
 
@@ -14,9 +14,27 @@ exports.getlogin = (req, res) => {
     res.sendFile(path.join(__dirname, '../','public', 'login.html'));
 };
 
+exports.getQuiz = async (req, res) => {
+    try {
+        const userId = req.query.userId; // Get userId from query params
+        if (!userId) {
+            return res.sendFile(path.join(__dirname, '../','public', 'quiz.html'));
+        }
 
-exports.getQuiz = (req, res) => {
-    res.sendFile(path.join(__dirname, '../','public', 'quiz.html'));
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.sendFile(path.join(__dirname, '../','public', 'quiz.html'));
+        }
+
+        if (user.hasSubmittedQuiz) {
+            // User has already submitted - send a different page or handle differently
+            return res.sendFile(path.join(__dirname, '../','public', 'quiz-submitted.html'));
+        }
+
+        res.sendFile(path.join(__dirname, '../','public', 'quiz.html'));
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
 };
 
 exports.register = async (req, res) => {
@@ -51,120 +69,132 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-exports.submitQuiz = async (req, res) => {
-    try {
-        const { userId, answers } = req.body;
 
-        // Validate user
+exports.startQuizTimer = async (req, res) => {
+    try {
+        const { userId } = req.body;
         const user = await User.findById(userId);
+        
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        // Check if user has already submitted
+        
         if (user.hasSubmittedQuiz) {
-            return res.status(400).json({ message: 'Quiz already submitted', score: user.score });
+            return res.status(400).json({ message: 'Quiz already submitted' });
         }
-
-        // Array of correct answers
-        const correctAnswers = ['correct1', 'correct2', 'correct3', 'correct2', 'correct2'];
-
-        // Extract user answers into an array
-        const userAnswers = [
-            answers.answer1.toLowerCase(),
-            answers.answer2.toLowerCase(),
-            answers.answer3.toLowerCase(),
-            answers.answer4.toLowerCase(),
-            answers.answer5.toLowerCase()
-        ];
-
-        // Calculate score using a for-loop
-        let score = 0;
-        for (let i = 0; i < correctAnswers.length; i++) {
-            if (userAnswers[i] === correctAnswers[i]) {
-                score += 50; // 50 points for each correct answer
-            }
+        
+        if (!user.quizStartTime) {
+            user.quizStartTime = new Date();
+            user.timeRemaining = 1200;
+            await user.save();
         }
-
-        // Update user
-        user.score = score;
-        user.hasSubmittedQuiz = true;
-        user.submittedAnswers = userAnswers;
-        await user.save();
-
-        // Send response
-        res.json({ score, message: 'Quiz submitted successfully' });
+        
+        res.json({ 
+            startTime: user.quizStartTime,
+            timeRemaining: user.timeRemaining 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
 };
 
+exports.getQuizTime = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        if (user.hasSubmittedQuiz) {
+            return res.json({ 
+                timeRemaining: 0,
+                quizCompleted: true 
+            });
+        }
+        
+        let timeRemaining = 1200; // Default time
+        
+        if (user.quizStartTime) {
+            const currentTime = new Date();
+            const elapsedSeconds = Math.floor((currentTime - user.quizStartTime) / 1000);
+            timeRemaining = Math.max(0, 1200 - elapsedSeconds);
+            
+            // Update the user's time remaining
+            user.timeRemaining = timeRemaining;
+            await user.save();
+        }
+        
+        res.json({ 
+            timeRemaining,
+            quizCompleted: false 
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.submitQuiz = async (req, res) => {
+    try {
+        const { userId, answers } = req.body;
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-// exports.submitQuiz = async (req, res) => {
-//     try {
-//         const { userId, answers } = req.body;
-//         const user = await User.findById(userId);
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-//         // Check if user has already submitted
-//         if (user.hasSubmittedQuiz) {
-//             return res.status(400).json({ message: 'Quiz already submitted', score: user.score });
-//         }
-//         // Process answers (mock scoring logic)
-//         let score = 0;
-//         if (answers.answer1.toLowerCase() === 'correct1') score += 50;
-//         if (answers.answer2.toLowerCase() === 'correct2') score += 50;
-//         if (answers.answer3.toLowerCase() === 'correct3') score += 50;
-//         if (answers.answer4.toLowerCase() === 'correct2') score += 50;
-//         if (answers.answer5.toLowerCase() === 'correct2') score += 50;
-//         // Update user
-//         user.score = score;
-//         user.hasSubmittedQuiz = true;
-//         await user.save();
-//         res.json({ score, message: 'Quiz submitted successfully' });
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// };
+        if (user.hasSubmittedQuiz) {
+            return res.status(400).json({ 
+                message: 'Quiz already submitted'
+            });
+        }
 
-// exports.submitQuiz = async (req, res) => {
-//     try {
-//         const { userId, answers } = req.body;
-//         const user = await User.findById(userId);
-//         console.log("user",user);
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
+        // Calculate final time remaining and time taken
+        let timeRemaining = user.timeRemaining || 1200;
+        let timeTaken = 1200 - timeRemaining;
+        
+        if (user.quizStartTime) {
+            const currentTime = new Date();
+            const elapsedSeconds = Math.floor((currentTime - user.quizStartTime) / 1000);
+            timeRemaining = Math.max(0, 1200 - elapsedSeconds);
+            timeTaken = Math.min(1200, elapsedSeconds);
+        }
 
+        // Process answers
+        const correctAnswers = ['correct1', 'correct2', 'correct3', 'correct2', 'correct2'];
+        const userAnswers = [
+            answers.answer1?.toLowerCase() || '',
+            answers.answer2?.toLowerCase() || '',
+            answers.answer3?.toLowerCase() || '',
+            answers.answer4?.toLowerCase() || '',
+            answers.answer5?.toLowerCase() || ''
+        ];
 
-//         if (user.hasSubmittedQuiz) {
-//             return res.status(400).json({ message: 'Quiz already submitted', score: user.score });
-//         }
+        let score = 0;
+        for (let i = 0; i < correctAnswers.length; i++) {
+            if (userAnswers[i] === correctAnswers[i]) {
+                score += 50;
+            }
+        }
 
-//         const correctAnswers = ["correct1", "correct2","correct3","correct4","correct5"];  // Correct answers stored here
+        // Update user with submission details
+        user.score = score;
+        user.hasSubmittedQuiz = true;
+        user.timeRemaining = 0;
+        user.quizStartTime = undefined;
+        user.submittedAnswers = userAnswers;
+        user.submittedAt = new Date();
+        user.timeTaken = timeTaken;
+        await user.save();
 
-//         // Process user answers and compare with correct answers
-//         let score = 0;
-//         answers.forEach((answer, index) => {
-//             if (answer.toLowerCase() === correctAnswers[index].toLowerCase()) {
-//                 score += 50; // Award points for each correct answer
-//             }
-//         });
-
-//         // Store correct answers on the server (if you need to log or store them)
-//       //  user.submittedAnswers = answers;  // Save correct answers for future use (optional)
-
-//         // Store user’s score and submission status
-//         user.score = score;
-//         user.hasSubmittedQuiz = true;
-//         console.log("before save");
-//         await user.save();
-
-//         // Send response back to the client
-//         res.json({ score, message: 'Quiz submitted successfully' });
-//     } catch (error) {
-//         console.log("Here")
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// };
+        res.json({ 
+            success: true,
+            message: 'Quiz submitted successfully!' 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            message: 'Server error' 
+        });
+    }
+};
