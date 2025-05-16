@@ -89,6 +89,14 @@ exports.startQuizTimer = async (req, res) => {
             await user.save();
         }
         
+        // Calculate current time remaining
+        const currentTime = new Date();
+        const elapsedSeconds = Math.floor((currentTime - user.quizStartTime) / 1000);
+        const timeRemaining = Math.max(0, 1200 - elapsedSeconds);
+        
+        user.timeRemaining = timeRemaining;
+        await user.save();
+        
         res.json({ 
             startTime: user.quizStartTime,
             timeRemaining: user.timeRemaining 
@@ -100,7 +108,7 @@ exports.startQuizTimer = async (req, res) => {
 
 exports.getQuizTime = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.params.userId;
         const user = await User.findById(userId);
         
         if (!user) {
@@ -114,7 +122,7 @@ exports.getQuizTime = async (req, res) => {
             });
         }
         
-        let timeRemaining = 1200; // Default time
+        let timeRemaining = user.timeRemaining || 1200;
         
         if (user.quizStartTime) {
             const currentTime = new Date();
@@ -134,6 +142,7 @@ exports.getQuizTime = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 exports.submitQuiz = async (req, res) => {
     try {
         const { userId, answers } = req.body;

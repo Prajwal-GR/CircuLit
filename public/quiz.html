@@ -28,7 +28,7 @@
                 <img src="./questions/image.png" alt="Question 1" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer1" class="w-full p-2 border text-black rounded-lg" placeholder="Enter your answer">
             </div>
-            <div class="mb-8">
+            <div class="mb-8 biti">
                 <img src="./questions/image.png" alt="Question 2" class="w-full max-w-md mx-auto mb-4">
                 <input type="text" id="answer2" class="w-full p-2 border text-black rounded-lg" placeholder="Enter your answer">
             </div>
@@ -65,7 +65,6 @@
         let timerInterval;
         const totalTime = 1200; // 20 minutes in seconds
         let timeRemaining = totalTime;
-        let lastSyncTime = Date.now();
 
         // Format time as MM:SS
         function formatTime(seconds) {
@@ -100,16 +99,15 @@
                 if (response.ok) {
                     if (result.quizCompleted) {
                         clearInterval(timerInterval);
+                        timeRemaining = 0;
+                        updateTimerDisplay();
                         document.getElementById('submitButton').disabled = true;
                         document.getElementById('submitButton').classList.add('opacity-50', 'cursor-not-allowed');
                         return;
                     }
                     
-                    if (result.timeRemaining < timeRemaining) {
-                        timeRemaining = result.timeRemaining;
-                        updateTimerDisplay();
-                        lastSyncTime = Date.now();
-                    }
+                    timeRemaining = result.timeRemaining;
+                    updateTimerDisplay();
                 }
             } catch (error) {
                 console.error('Error syncing timer:', error);
@@ -120,16 +118,11 @@
         function startCountdown() {
             updateTimerDisplay();
             timerInterval = setInterval(async () => {
-                const now = Date.now();
-                const timeSinceLastSync = now - lastSyncTime;
+                timeRemaining = Math.max(0, timeRemaining - 1);
+                updateTimerDisplay();
                 
-                if (timeSinceLastSync > 1000) {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    lastSyncTime = now;
-                }
-                
-                if (timeSinceLastSync > 15000) {
+                // Sync with server every 10 seconds
+                if (timeRemaining % 10 === 0) {
                     await syncWithServer();
                 }
                 
@@ -214,7 +207,7 @@
                         return;
                     }
                     
-                    timeRemaining = result.timeRemaining || totalTime;
+                    timeRemaining = result.timeRemaining;
                     updateTimerDisplay();
                     
                     if (timeRemaining === totalTime) {
