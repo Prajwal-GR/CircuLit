@@ -5,10 +5,13 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     score: { type: Number, default: 0 },
-    submittedAnswers: {
-        type: [String],
-        default: [],
-    },
+    submittedAnswers: { type: Object, default: {} },
+    questionResults: [{
+        questionNumber: Number,
+        userAnswer: String,
+        correctAnswer: String,
+        isCorrect: Boolean
+    }],
     hasSubmittedQuiz: { type: Boolean, default: false },
     quizStartTime: { type: Date },
     timeRemaining: { type: Number, default: 1200 },

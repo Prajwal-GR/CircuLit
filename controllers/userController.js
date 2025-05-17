@@ -158,52 +158,64 @@ exports.submitQuiz = async (req, res) => {
             });
         }
 
-        // Calculate final time remaining and time taken
-        let timeRemaining = user.timeRemaining || 1200;
-        let timeTaken = 1200 - timeRemaining;
-        
-        if (user.quizStartTime) {
-            const currentTime = new Date();
-            const elapsedSeconds = Math.floor((currentTime - user.quizStartTime) / 1000);
-            timeRemaining = Math.max(0, 1200 - elapsedSeconds);
-            timeTaken = Math.min(1200, elapsedSeconds);
-        }
+        // Calculate time taken
+        const timeTaken = user.quizStartTime 
+            ? Math.min(1200, Math.floor((new Date() - user.quizStartTime) / 1000))
+            : 0;
 
         // Process answers
-        const correctAnswers = ['correct1', 'correct2', 'correct3', 'correct2', 'correct2'];
-        const userAnswers = [
-            answers.answer1?.toLowerCase() || '',
-            answers.answer2?.toLowerCase() || '',
-            answers.answer3?.toLowerCase() || '',
-            answers.answer4?.toLowerCase() || '',
-            answers.answer5?.toLowerCase() || ''
-        ];
+        const CORRECT_ANSWERS = {
+            answer1: "D",
+            answer2: "B", 
+            answer3: "C",
+            answer4: "A",
+            answer5: "D"
+        };
 
         let score = 0;
-        for (let i = 0; i < correctAnswers.length; i++) {
-            if (userAnswers[i] === correctAnswers[i]) {
-                score += 50;
-            }
+        const questionResults = [];
+        const submittedAnswers = {};
+
+        for (let i = 1; i <= 5; i++) {
+            const answerKey = `answer${i}`;
+            const userAnswer = answers[answerKey] || '';
+            const isCorrect = userAnswer === CORRECT_ANSWERS[answerKey];
+            
+            if (isCorrect) score += 20;
+            
+            submittedAnswers[answerKey] = userAnswer;
+            questionResults.push({
+                questionNumber: i,
+                userAnswer,
+                correctAnswer: CORRECT_ANSWERS[answerKey],
+                isCorrect
+            });
         }
 
-        // Update user with submission details
+        // Update user
         user.score = score;
         user.hasSubmittedQuiz = true;
         user.timeRemaining = 0;
-        user.quizStartTime = undefined;
-        user.submittedAnswers = userAnswers;
+        user.submittedAnswers = submittedAnswers;
+        user.questionResults = questionResults;
         user.submittedAt = new Date();
         user.timeTaken = timeTaken;
+        user.quizStartTime = undefined;
+        
         await user.save();
 
         res.json({ 
             success: true,
-            message: 'Quiz submitted successfully!' 
+            message: 'Quiz submitted successfully!',
+            score,
+            totalQuestions: 5,
+            correctAnswers: score / 20,
+            questionResults
         });
     } catch (error) {
         res.status(500).json({ 
             success: false,
-            message: 'Server error' 
+            message: 'Server error: ' + error.message 
         });
     }
 };
